@@ -2,7 +2,7 @@
 [badges/last-modified]: https://img.shields.io/github/last-commit/NguyenNhatIT/RobloxDeploymentDownloader?label=Last%20Modifed
 
 > [!CAUTION]
-> The only *official* host of RDD is [**`nguyennhatit.localplayer.dev/RobloxDeploymentDownloader`**](https://nguyennhatit.localplayer.dev/RobloxDeploymentDownloader). Under no circumstances is Latte Softworks responsible for any potential harm caused by using an unofficial fork/rehost of RDD, though anyone is free to fork off of or rehost RDD as it is under the MIT license. RDD is a static website with none of its own backend infrastructure, binaries are fetched directly from Roblox's official content delivery network via [**`setup-aws.[rbxcdn.com]`**](https://setup-aws.rbxcdn.com).
+> The only *official* host of RDD is [**`rdd-roblox.pages.dev`**](https://rdd-roblox.pages.dev/). Under no circumstances is Latte Softworks responsible for any potential harm caused by using an unofficial fork/rehost of RDD, though anyone is free to fork off of or rehost RDD as it is under the MIT license. RDD is a static website with none of its own backend infrastructure, binaries are fetched directly from Roblox's official content delivery network via [**`setup-aws.[rbxcdn.com]`**](https://setup-aws.rbxcdn.com).
 
 ## RDD ("Roblox Deployment Downloader")
 
@@ -10,7 +10,7 @@
 
 Locally download Roblox deployments (Windows/Mac) directly from your browser!
 
-Hosted officially @ <https://nguyennhatit.localplayer.dev/RobloxDeploymentDownloader>
+Hosted officially @ <https://rdd-roblox.pages.dev/>
 
 ### What is this?
 
@@ -20,7 +20,7 @@ RDD can assemble plain resources directly from Roblox's [`setup`](https://setup.
 
 ```txt
 
-[*] USAGE: https://nguyennhatit.localplayer.dev/RobloxDeploymentDownloader/?channel=<CHANNEL_NAME>&binaryType=<BINARY_TYPE>&version=<VERSION_HASH>
+[*] USAGE: https://rdd-roblox.pages.dev/?channel=<CHANNEL_NAME>&binaryType=<BINARY_TYPE>&version=<VERSION_HASH>
 
     Binary Types:
     * WindowsPlayer
