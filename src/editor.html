@@ -1,169 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Roblox LuaU Editor</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tilt+Neon&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox LuaU Editor</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: #0E111B;
+  overflow: hidden;
+}
+#container {
+  width: 100%;
+  height: 100%;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+<script>
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
 
-    :root {
-      --bg-color: #0E0A17;
-      --text-color: #bcb9c4;
-      --accent-color: #586BA8;
-      --hover-color: #151320;
-      --border-color: #151324;
-      --secondary-text: #7e7d81;
-      --function-color: #dcdcaa;
-      --property-color: #56B6C2;
-    }
+require(['vs/editor/editor.main'], function () {
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      background: var(--bg-color);
-      color: var(--text-color);
-      overflow: hidden;
-      font-family: 'Tilt Neon', monospace;
+  // --- Theme RobloxDark ---
+  monaco.editor.defineTheme('robloxDark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: '', background: '0E111B' },
+      { token: 'keyword', foreground: 'C586C0' },
+      { token: 'identifier', foreground: '9CDCFE' },
+      { token: 'number', foreground: 'B5CEA8' },
+      { token: 'string', foreground: 'CE9178' },
+      { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+      { token: 'operator', foreground: 'D4D4D4' },
+      { token: 'roblox.class', foreground: '4FC3F7', fontStyle: 'bold' },
+      { token: 'roblox.property', foreground: 'E5C07B' },
+      { token: 'roblox.method', foreground: '56B6C2' },
+    ],
+    colors: {
+      'editor.background': '#0E111B',
+      'editorLineNumber.foreground': '#3E4451',
+      'editorCursor.foreground': '#FFFFFF',
+      'editorLineNumber.activeForeground': '#9CDCFE',
+      'editor.selectionBackground': '#264F78',
+      'editor.inactiveSelectionBackground': '#3A3D41',
+      'minimap.background': '#0E111B',
     }
+  });
 
-    #container {
-      width: 100%;
-      height: 100vh;
+  // --- Register LuaU Syntax ---
+  monaco.languages.register({ id: 'luau' });
+  monaco.languages.setMonarchTokensProvider('luau', {
+    tokenizer: {
+      root: [
+        [/\b(local|if|then|end|for|while|function|return|break|and|or|not|in)\b/, 'keyword'],
+        [/\b(game|workspace|Instance|Vector3|BrickColor|Color3|CFrame)\b/, 'roblox.class'],
+        [/\b(Parent|Position|Color|Anchored|Size|Material|Transparency|CanCollide)\b/, 'roblox.property'],
+        [/\b(new|FindFirstChild|WaitForChild|Connect)\b/, 'roblox.method'],
+        [/"([^"\\]|\\.)*$/, 'string.invalid'],
+        [/"([^"\\]|\\.)*"/, 'string'],
+        [/'([^'\\]|\\.)*'/, 'string'],
+        [/[0-9]+(\.[0-9]+)?/, 'number'],
+        [/[a-zA-Z_]\w*/, 'identifier'],
+        [/--.*/, 'comment']
+      ]
     }
-  </style>
+  });
+
+  // --- Completion Provider (Auto Suggest) ---
+  monaco.languages.registerCompletionItemProvider('luau', {
+    provideCompletionItems: function (model, position) {
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn
+      };
+
+      const suggestions = [
+        { label: 'print', kind: monaco.languages.CompletionItemKind.Function, insertText: 'print(${1:msg})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+        { label: 'Instance.new', kind: monaco.languages.CompletionItemKind.Function, insertText: 'Instance.new("${1:Part}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+        { label: 'Vector3.new', kind: monaco.languages.CompletionItemKind.Function, insertText: 'Vector3.new(${1:0}, ${2:0}, ${3:0})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+        { label: 'Color3.fromRGB', kind: monaco.languages.CompletionItemKind.Function, insertText: 'Color3.fromRGB(${1:255}, ${2:255}, ${3:255})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+        { label: 'BrickColor.new', kind: monaco.languages.CompletionItemKind.Function, insertText: 'BrickColor.new("${1:Bright blue}")', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet },
+        { label: 'workspace', kind: monaco.languages.CompletionItemKind.Variable, insertText: 'workspace' },
+        { label: 'game', kind: monaco.languages.CompletionItemKind.Variable, insertText: 'game' },
+        { label: 'Parent', kind: monaco.languages.CompletionItemKind.Property, insertText: 'Parent' },
+        { label: 'Position', kind: monaco.languages.CompletionItemKind.Property, insertText: 'Position' },
+        { label: 'Anchored', kind: monaco.languages.CompletionItemKind.Property, insertText: 'Anchored' },
+        { label: 'Size', kind: monaco.languages.CompletionItemKind.Property, insertText: 'Size' }
+      ];
+
+      return { suggestions: suggestions.map(s => ({ ...s, range })) };
+    }
+  });
+
+  // --- Create Editor ---
+  const editor = monaco.editor.create(document.getElementById('container'), {
+    value: '-- Made by Nguyễn Minh Nhật\nprint("Hello Roblox!")\n\nlocal part = Instance.new("Part")\npart.Parent = workspace\npart.BrickColor = BrickColor.new("Bright blue")\npart.Anchored = true\npart.Position = Vector3.new(0, 10, 0)',
+    language: 'luau',
+    theme: 'robloxDark',
+    fontSize: 15,
+    fontFamily: 'Consolas, monospace',
+    automaticLayout: true,
+    smoothScrolling: true,
+    roundedSelection: true,
+    minimap: { enabled: true },
+  });
+
+  // --- Re-trigger suggestion on every input ---
+  editor.onDidChangeModelContent(() => {
+    editor.trigger('any', 'editor.action.triggerSuggest', {});
+  });
+
+  // --- Expose functions for WPF ---
+  window.getText = function () {
+    return editor.getValue();
+  };
+  window.setText = function (text) {
+    editor.setValue(text || "");
+  };
+  window.clearText = function () {
+    editor.setValue("");
+  };
+
+  // --- Optional: expose ready flag ---
+  window.editorReady = true;
+});
+</script>
 </head>
 <body>
-  <div id="container"></div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>
-  <script>
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' } });
-
-    require(['vs/editor/editor.main'], function () {
-      // 🧩 Language setup
-      monaco.languages.register({ id: 'luau' });
-
-      monaco.languages.setMonarchTokensProvider('luau', {
-        tokenizer: {
-          root: [
-            [/\b(function|local|end|if|then|elseif|else|for|in|while|repeat|until|return|break|and|or|not|nil|true|false)\b/, 'keyword'],
-            [/[a-zA-Z_]\w*(?=\s*\()/, 'function'],
-            [/[a-zA-Z_]\w*(?=\.)/, 'variable'],
-            [/\.[a-zA-Z_]\w*/, 'property'],
-            [/\d+(\.\d+)?/, 'number'],
-            [/".*?"/, 'string'],
-            [/'.*?'/, 'string'],
-            [/--.*/, 'comment'],
-          ],
-        }
-      });
-
-      // 🎨 Custom theme
-      monaco.editor.defineTheme('RobloxLuauTheme', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [
-          { token: '', foreground: 'bcb9c4' },
-          { token: 'keyword', foreground: '586BA8', fontStyle: 'bold' },
-          { token: 'string', foreground: 'A8B4FF' },
-          { token: 'number', foreground: 'B5CEA8' },
-          { token: 'function', foreground: 'dcdcaa' },
-          { token: 'property', foreground: '56B6C2' },
-          { token: 'comment', foreground: '5C6370', fontStyle: 'italic' },
-        ],
-        colors: {
-          'editor.background': '#0E0A17',
-          'editor.foreground': '#bcb9c4',
-          'editorCursor.foreground': '#586BA8',
-          'editorLineNumber.foreground': '#7e7d81',
-          'editorLineNumber.activeForeground': '#586BA8',
-          'editor.selectionBackground': '#2a365c',
-          'scrollbarSlider.activeBackground': '#2d355c',
-        }
-      });
-
-      // 🧠 Roblox API completion
-      const robloxAPI = [
-        { label: 'game', kind: monaco.languages.CompletionItemKind.Variable, documentation: 'The root DataModel object.' },
-        { label: 'workspace', kind: monaco.languages.CompletionItemKind.Variable, documentation: 'Contains all 3D objects in the game.' },
-        { label: 'Instance', kind: monaco.languages.CompletionItemKind.Class, documentation: 'Base class for all Roblox objects.' },
-        { label: 'Enum', kind: monaco.languages.CompletionItemKind.Module, documentation: 'Holds all enums available in Roblox.' },
-        { label: 'task', kind: monaco.languages.CompletionItemKind.Module, documentation: 'Roblox task library for scheduling asynchronous work.' },
-        { label: 'task.wait', kind: monaco.languages.CompletionItemKind.Function, documentation: 'Yields the current thread for the specified amount of time.' },
-        { label: 'wait', kind: monaco.languages.CompletionItemKind.Function, documentation: 'Yields the current thread briefly.' },
-        { label: 'print', kind: monaco.languages.CompletionItemKind.Function, documentation: 'Prints output to console.' },
-        { label: 'warn', kind: monaco.languages.CompletionItemKind.Function, documentation: 'Prints warning to console.' },
-        { label: 'require', kind: monaco.languages.CompletionItemKind.Function, documentation: 'Loads and returns a module script.' },
-        { label: 'Vector3', kind: monaco.languages.CompletionItemKind.Class, documentation: 'Represents a 3D vector.' },
-        { label: 'CFrame', kind: monaco.languages.CompletionItemKind.Class, documentation: 'Represents the position and rotation in 3D space.' },
-        { label: 'Color3', kind: monaco.languages.CompletionItemKind.Class, documentation: 'Represents RGB color values.' },
-      ];
-
-      // 🔸 Gợi ý thuộc tính Roblox (nhiều hiệu ứng hơn)
-      const robloxProperties = [
-        { label: 'Parent', kind: monaco.languages.CompletionItemKind.Property, documentation: 'Parent of the Instance.' },
-        { label: 'Name', kind: monaco.languages.CompletionItemKind.Property, documentation: 'The name of the Instance.' },
-        { label: 'BrickColor', kind: monaco.languages.CompletionItemKind.Property, documentation: 'BrickColor of a Part.' },
-        { label: 'Position', kind: monaco.languages.CompletionItemKind.Property, documentation: 'Position of the object in 3D space.' },
-        { label: 'Anchored', kind: monaco.languages.CompletionItemKind.Property, documentation: 'Determines if the part is anchored.' },
-        { label: 'Transparency', kind: monaco.languages.CompletionItemKind.Property, documentation: 'Transparency of the object.' },
-        { label: 'Material', kind: monaco.languages.CompletionItemKind.Property, documentation: 'Material of a Part.' },
-      ];
-
-      monaco.languages.registerCompletionItemProvider('luau', {
-        triggerCharacters: ['.', ':'],
-        provideCompletionItems: (model, position) => {
-          const textUntilPosition = model.getValueInRange({
-            startLineNumber: position.lineNumber,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column
-          });
-
-          if (textUntilPosition.endsWith('.')) {
-            // Suggest properties
-            const suggestions = robloxProperties.map(prop => ({
-              label: prop.label,
-              kind: prop.kind,
-              insertText: prop.label,
-              documentation: prop.documentation
-            }));
-            return { suggestions };
-          } else {
-            // Suggest base API
-            const suggestions = robloxAPI.map(api => ({
-              label: api.label,
-              kind: api.kind,
-              insertText: api.label,
-              documentation: api.documentation
-            }));
-            return { suggestions };
-          }
-        }
-      });
-
-      // 🧩 Create editor
-      window.editor = monaco.editor.create(document.getElementById('container'), {
-        value: `-- Made By Nguyễn Minh Nhật
-print("Hello Roblox!")
-
-local part = Instance.new("Part")
-part.Parent = workspace
-part.BrickColor = BrickColor.new("Bright blue")
-part.Anchored = true
-part.Position = Vector3.new(0, 10, 0)
-`,
-        language: 'luau',
-        theme: 'RobloxLuauTheme',
-        fontFamily: "'Tilt Neon', Consolas, monospace",
-        fontSize: 15,
-        cursorBlinking: 'smooth',
-        smoothScrolling: true,
-        minimap: { enabled: true },
-        automaticLayout: true,
-      });
-    });
-  </script>
+<div id="container"></div>
 </body>
 </html>
